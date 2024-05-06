@@ -4,7 +4,7 @@ import math
 from matplotlib import pyplot as plt 
   
 # reading image 
-img = cv2.imread('image1.png') 
+img = cv2.imread('image1.png')
 
 
   
@@ -51,7 +51,8 @@ for contour in contours:
     M = cv2.moments(contour) 
     if M['m00'] != 0.0: 
         x = int(M['m10']/M['m00']) 
-        y = int(M['m01']/M['m00']) 
+        y = int(M['m01']/M['m00'])
+        cv2.circle(img, (x, y), 5, (0, 255, 0), -1)
 # displaying the image after drawing contours 
 cv2.imshow('shapes', img) 
   
