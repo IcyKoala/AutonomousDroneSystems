@@ -24,8 +24,11 @@ class CameraDetector:
             return None
         # Convert the frame to grayscale
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        kernel = np.ones((5,5),np.uint8)
+        gray_scale = cv2.morphologyEx(gray_frame, cv2.MORPH_OPEN, kernel)
 
-        _, threshold = cv2.threshold(gray_frame, 127, 255, cv2.THRESH_BINARY)
+
+        _, threshold = cv2.threshold(gray_scale, 175, 255, cv2.THRESH_BINARY)
 
         contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -35,29 +38,31 @@ class CameraDetector:
 
         for contour in contours:
             # Approximate contour
-            approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
+            approx = cv2.approxPolyDP(contour, 0.1 * cv2.arcLength(contour, True), True)
 
 
             # Filter only triangles (3 vertices)
             if len(approx) == 3:
 
                 triangle_points.append(approx)
-                cv2.drawContours(frame, [contour], 0, (0, 0, 255), 5)
+                cv2.drawContours(threshold, [contour], 0, (0, 0, 255), 5)
 
                 center = self.getCenter(approx)
-                # cv2.circle(frame, center, 5, (0, 255, 0), -1)
+                cv2.circle(threshold, center, 5, (0, 255, 0), -1)
+
+                cv2.putText(threshold, 'Triangle', center, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
 
                 orientation_vector = self.checkOrientation(center, approx)
 
                 # Draw line from center using orientation vector
                 endpoint = (center[0] + orientation_vector[0], center[1] + orientation_vector[1])
-                # cv2.line(frame, center, endpoint, (255, 0, 0), 2)
+                cv2.line(threshold, center, endpoint, (255, 0, 0), 2)
 
                 print(self.checkColor(frame, center))
 
 
         # Display the frame
-        cv2.imshow('frame', frame)
+        cv2.imshow('frame', threshold)
         cv2.waitKey(1)
         pass
 
@@ -120,7 +125,7 @@ class CameraDetector:
         if not ret:
             return None
 
-        cv2.imshow('frame', frame)
+        # cv2.imshow('frame', frame)
         cv2.waitKey(1)
         return frame
 
@@ -133,6 +138,8 @@ while True:
 
     if frame is None:
         break
+
+
 
 detector.release()
 cv2.destroyAllWindows()
