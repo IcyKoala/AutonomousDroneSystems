@@ -3,7 +3,7 @@ import numpy as np
 import math
 class CameraDetector:
     def __init__(self) -> None:
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture('https://145.137.76.228:8080/video')
 
     def release(self):
         self.cap.release()
@@ -22,6 +22,7 @@ class CameraDetector:
 
         if frame is None:
             return None
+
         # Convert the frame to grayscale
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         kernel = np.ones((5,5),np.uint8)
@@ -37,32 +38,34 @@ class CameraDetector:
 
 
         for contour in contours:
+            if cv2.contourArea(contour) < 50:  # Area filtering
+                continue
             # Approximate contour
-            approx = cv2.approxPolyDP(contour, 0.1 * cv2.arcLength(contour, True), True)
+            approx = cv2.approxPolyDP(contour, 0.2 * cv2.arcLength(contour, True), True)
 
 
             # Filter only triangles (3 vertices)
             if len(approx) == 3:
+                # Check if contour is convex
+                if not cv2.isContourConvex(approx):
+                    continue
 
                 triangle_points.append(approx)
-                cv2.drawContours(threshold, [contour], 0, (0, 0, 255), 5)
+                cv2.drawContours(frame, [contour], 0, (0, 0, 255), 5)
 
                 center = self.getCenter(approx)
-                cv2.circle(threshold, center, 5, (0, 255, 0), -1)
-
-                cv2.putText(threshold, 'Triangle', center, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+                cv2.circle(frame, center, 5, (0, 255, 0), -1)
+                cv2.putText(frame, 'Triangle', center, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
 
                 orientation_vector = self.checkOrientation(center, approx)
-
-                # Draw line from center using orientation vector
                 endpoint = (center[0] + orientation_vector[0], center[1] + orientation_vector[1])
-                cv2.line(threshold, center, endpoint, (255, 0, 0), 2)
-
+                cv2.line(frame, center, endpoint, (255, 0, 0), 2)
                 print(self.checkColor(frame, center))
 
 
+
         # Display the frame
-        cv2.imshow('frame', threshold)
+        cv2.imshow('frame', frame)
         cv2.waitKey(1)
         pass
 
