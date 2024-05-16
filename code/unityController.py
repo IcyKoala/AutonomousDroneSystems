@@ -1,4 +1,4 @@
-class unityController:
+class UnityController:
     def __init__(self) -> None:
        pass
 
