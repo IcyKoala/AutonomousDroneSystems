@@ -1,4 +1,4 @@
-class pathPlanning:
+class PathPlanning:
     # map<shape, coords<int, int>>
     def __init__(self) -> None:
         pass
