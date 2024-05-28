@@ -43,7 +43,7 @@ class PathPlanning:
 
             x = center[0] + radius * math.cos(totalRotation)
             y = center[1] + radius * math.sin(totalRotation)
-            targets.append((x, y))
+            targets.append((int(x), int(y)))
         return targets
 
 

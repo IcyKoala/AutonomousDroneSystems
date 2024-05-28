@@ -2,6 +2,9 @@ from hungarian_algorithm import algorithm
 from Drone import Drone
 
 class Astar:
+    def findPath(self, start, end):
+        return self.aStarSearch(start, end, 0)
+
     def calc_targets(self, drones, targets):
         self.grid = [[0 for j in range(100)] for i in range(100)]
         dp = {}
@@ -22,11 +25,10 @@ class Astar:
               
                 drones[index].setTarget(targets[0])
                 return
-            
+        
         paths = algorithm.find_matching(dp, matching_type = 'min', return_type = 'list')
-    
+     
         for path in paths:
-            print("path = " + str(path))
             name = path[0][0]
             loc = path[0][1][1:-1]
             loc = loc.split(",")
@@ -35,6 +37,7 @@ class Astar:
             targetpos = [int(x),int(y)]
 
             drones[int(name)].setTarget(targetpos)
+       
         return drones
             
         
@@ -141,7 +144,7 @@ class Astar:
                     if self.isDestination([iNew, jNew], end):
                         cellDetails[iNew][jNew]["parent_i"] = i
                         cellDetails[iNew][jNew]["parent_j"] = j
-                        print("The destination cell is found")
+                   
                         foundDest = True
                         
                         return self.tracePath(cellDetails, end, dist)

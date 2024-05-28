@@ -50,6 +50,9 @@ class Drone:
     def getPosition(self):
          return self.position
     
+    def getTarget(self):
+        return self.target
+    
     def setPosition(self,position):
             self.position = position
     
