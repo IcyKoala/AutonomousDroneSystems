@@ -84,5 +84,16 @@ class DroneController:
 
 class Drone:
     def __init__(self, colour) -> None:
+        self.positon = (0,0) 
+        self.target = (0,0)
         self.colour = colour
         pass
+
+    def getPosition(self):
+         return self.position
+    
+    def setPosition(self,position):
+            self.position = position
+    
+    def setTarget(self,target):
+         self.target = target
