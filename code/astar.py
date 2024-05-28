@@ -11,26 +11,20 @@ class Astar:
         if len(targets) == 0:   
             return
         for index in range(len(drones)):
-            dp[index] = {}
+            dp[str(index)] = {}
             for target in targets:
-                dist = self.aStarSearch((drones[index].getPosition()[0],drones[index].getPosition()[0]), target, 1)
-                dp[index][str(target)]= dist
-        if len(drones) == 1:
-            for index in range(len(drones)):
-               
-                drones[index].setTarget(targets[0])
-                return
-        if len(targets) == 1:
-            for index in range(len(drones)):
-              
-                drones[index].setTarget(targets[0])
-                return
+                xdist = abs(drones[index].getPosition()[0] - target[0])
+                ydist = abs(drones[index].getPosition()[1] - target[1])
+                dist = xdist + ydist + 1
+                dp[str(index)][str(target)]= dist
+
         print(dp)
         paths = algorithm.find_matching(dp, matching_type = 'min', return_type = 'list')
       
         print (paths)
         for path in paths:
             name = path[0][0]
+            print(name)
             loc = path[0][1][1:-1]
             loc = loc.split(",")
             x = loc[0]
@@ -103,7 +97,7 @@ class Astar:
         if start == end:
             print("Start and End are same")
             if dist == 1:
-                return 1000
+                return 0
             return start
         
         # Initialize the closed list
