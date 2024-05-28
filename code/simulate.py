@@ -14,6 +14,8 @@ pygame.display.set_caption("My Game")
 def drawSquare(x, y, color = 0):
     if color == 0:
         pygame.draw.rect(screen, (0, 0, 0), (x*10, y*10, 10, 10))
+    elif color == 2:
+        pygame.draw.rect(screen, (255, 0, 0), (x*10, y*10, 10, 10))
     else:
         pygame.draw.rect(screen, (255, 255, 255), (x*10, y*10, 10, 10))
 
@@ -36,9 +38,10 @@ while running:
     # Render the screen
     screen.fill((0, 0, 0))
   
-    targets = pathPlanning.PathPlanning.RotateCircleFormation(4, 30, (50,50), 30)
+    targets = pathPlanning.PathPlanning.RotateCircleFormation(4, 20, (50,50), 150)
     print("test1")
-    
+    for target in targets:
+        drawSquare(target[0], target[1], 2)
     drones = star.calc_targets(drones, targets)
    
     print("test2")

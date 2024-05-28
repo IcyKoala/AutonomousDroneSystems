@@ -13,7 +13,7 @@ class Astar:
         for index in range(len(drones)):
             dp[index] = {}
             for target in targets:
-                dist = self.aStarSearch(drones[index].getPosition(), target, 1)
+                dist = self.aStarSearch((drones[index].getPosition()[0],drones[index].getPosition()[0]), target, 1)
                 dp[index][str(target)]= dist
         if len(drones) == 1:
             for index in range(len(drones)):
@@ -25,9 +25,10 @@ class Astar:
               
                 drones[index].setTarget(targets[0])
                 return
-        
+        print(dp)
         paths = algorithm.find_matching(dp, matching_type = 'min', return_type = 'list')
-     
+      
+        print (paths)
         for path in paths:
             name = path[0][0]
             loc = path[0][1][1:-1]
