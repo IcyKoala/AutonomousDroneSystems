@@ -1,23 +1,34 @@
 import cv2
 import numpy as np
-import math
+import threading
+
 class CameraDetector:
     def __init__(self) -> None:
-        self.cap = cv2.VideoCapture('https://145.137.76.228:8080/video')
+        self.cap = cv2.VideoCapture('https://145.137.78.29:8080//video')
+        self.frame = None
+        self.lock = threading.Lock()
+        self.running = True
+
+        # Start the video capture thread
+        self.capture_thread = threading.Thread(target=self.update_frame, daemon=True)
+        self.capture_thread.start()
+
+    def update_frame(self):
+        while self.running:
+            ret, frame = self.cap.read()
+            if ret:
+                with self.lock:
+                    self.frame = frame
 
     def release(self):
+        self.running = False
+        self.capture_thread.join()
         self.cap.release()
-
-    def checkDrone(image):
-        #function that takes a image as input.
-        #Returns a list of all the drones in the image.
-        #This list contains information about the color, position and orientation
-        pass
 
     def detectTriangle(self, frame):
         '''
-        takes video stream
-        returns a list of all triangles and there corners
+        Takes video stream frame
+        Returns a list of all triangles and their corners
         '''
 
         if frame is None:
@@ -25,49 +36,56 @@ class CameraDetector:
 
         # Convert the frame to grayscale
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        kernel = np.ones((5,5),np.uint8)
-        gray_scale = cv2.morphologyEx(gray_frame, cv2.MORPH_OPEN, kernel)
 
+        # Apply Gaussian blur to reduce noise
+        blurred_frame = cv2.GaussianBlur(gray_frame, (5, 5), 0)
 
-        _, threshold = cv2.threshold(gray_scale, 175, 255, cv2.THRESH_BINARY)
+        # Apply adaptive thresholding
+        threshold = cv2.adaptiveThreshold(blurred_frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
 
+        # Find contours
         contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         # List to store points of triangles
         triangle_points = []
 
+        displayframe = frame.copy()
+        center = (0, 0)
 
         for contour in contours:
-            if cv2.contourArea(contour) < 50:  # Area filtering
+            area = cv2.contourArea(contour)
+            if area < 200 or area > 10000:  # Area filtering to ignore small contours
                 continue
-            # Approximate contour
-            approx = cv2.approxPolyDP(contour, 0.2 * cv2.arcLength(contour, True), True)
 
+            # Approximate contour
+            epsilon = 0.02 * cv2.arcLength(contour, True)
+            approx = cv2.approxPolyDP(contour, epsilon, True)
 
             # Filter only triangles (3 vertices)
             if len(approx) == 3:
                 # Check if contour is convex
                 if not cv2.isContourConvex(approx):
                     continue
+                center = self.getCenter(approx)
+                color = self.checkColor(frame, center)
+
+                print(color)
+
+                if color[2] < 200 or color[0] > 100 or color[1] > 100:
+                    continue
 
                 triangle_points.append(approx)
-                cv2.drawContours(frame, [contour], 0, (0, 0, 255), 5)
 
-                center = self.getCenter(approx)
-                cv2.circle(frame, center, 5, (0, 255, 0), -1)
-                cv2.putText(frame, 'Triangle', center, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+                cv2.drawContours(displayframe, [approx], 0, (0, 0, 255), 2)
+
+                cv2.circle(displayframe, center, 5, (0, 255, 0), -1)
+                cv2.putText(displayframe, 'Triangle', center, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
                 orientation_vector = self.checkOrientation(center, approx)
                 endpoint = (center[0] + orientation_vector[0], center[1] + orientation_vector[1])
-                cv2.line(frame, center, endpoint, (255, 0, 0), 2)
-                print(self.checkColor(frame, center))
+                cv2.line(displayframe, center, endpoint, (255, 0, 0), 2)
 
-
-
-        # Display the frame
-        cv2.imshow('frame', frame)
-        cv2.waitKey(1)
-        pass
+        return displayframe
 
     def checkColor(self, frame, centerPoint):
         """
@@ -75,20 +93,16 @@ class CameraDetector:
         Returns:
             tuple: BGR color value at the specified point.
         """
-
         # Sample color at the center point
         color = frame[centerPoint[1], centerPoint[0]]
-
         return color
 
     def getCenter(self, trianglePoints):
         """
         Calculate the center of a triangle given its three points.
-
         Returns:
             tuple: Coordinates of the center of the triangle.
         """
-
         # Unpack the points of the triangle
         p1, p2, p3 = trianglePoints
 
@@ -100,11 +114,9 @@ class CameraDetector:
 
         return (center_x, center_y)
 
-
     def checkOrientation(self, centerPoint, trianglePoints):
         """
         Function to check the orientation of the drone.
-
         Returns:
             tuple: Vector from center to the topmost point of the triangle.
         """
@@ -116,33 +128,29 @@ class CameraDetector:
         ]
 
         top_index = np.argmax(distances)
-
         top_point = trianglePoints[top_index][0]
-
         orientation_vector = (top_point[0] - centerPoint[0], top_point[1] - centerPoint[1])
 
         return orientation_vector
 
-    def showStream(self):
-        ret, frame = self.cap.read()
-        if not ret:
-            return None
+    def get_frame(self):
+        with self.lock:
+            return self.frame.copy() if self.frame is not None else None
 
-        # cv2.imshow('frame', frame)
-        cv2.waitKey(1)
-        return frame
+if __name__ == '__main__':
+    detector = CameraDetector()
 
-detector = CameraDetector()
+    while True:
+        frame = detector.get_frame()
+        if frame is None:
+            continue
 
-while True:
-    frame = detector.showStream()
+        frame_with_triangles = detector.detectTriangle(frame)
 
-    frame_with_triangles = detector.detectTriangle(frame)
+        if frame_with_triangles is not None:
+            cv2.imshow('frame', frame_with_triangles)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
-    if frame is None:
-        break
-
-
-
-detector.release()
-cv2.destroyAllWindows()
+    detector.release()
+    cv2.destroyAllWindows()

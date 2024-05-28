@@ -1,21 +1,24 @@
 from enum import Enum
 from Drone import DroneController
-from DroneManager import DroneManager
+# from DroneManager import DroneManager
 
 class userInterface:
     def __init__(self) -> None:
         self.controller = DroneController()
-        self.droneManager = DroneManager()
+        # self.droneManager = DroneManager()
         self.patterns = Enum('Patterns', ['DONUT'])
         self.controlSelect()
 
     def controlSelect(self):
-        controlMode = input("Select operation mode: \n 1 - Manual \n 2 - Automatic\n Selected: ")
+        controlMode = input("Select operation mode: \n 1 - Manual , 11- auto \n 2 - Automatic\n Selected: ")
         validInput = False
         while not validInput:
             if controlMode == "1":
                 validInput = True
                 self.controller.manualControl()
+            if controlMode == "11":
+                validInput = True
+                self.controller.findCenter()
             elif controlMode == "2":
                 validInput = False
                 self.patternSelect()
@@ -28,7 +31,7 @@ class userInterface:
         while not validInput:
             if controlMode == "1":
                 validInput = True
-                self.droneManager.instructDrones(self.patterns.DONUT)
+                # self.droneManager.instructDrones(self.patterns.DONUT)
             else:
                 controlMode = input("incorrect input, please try again: ")
 
