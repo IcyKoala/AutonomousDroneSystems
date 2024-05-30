@@ -33,7 +33,33 @@ class PathPlanning:
         #return path for drone
         pass
 
-    def RotateCircleFormation(droneAmount, radius, center, Rotationtime):
+    def rotateLineFormation(self,droneAmount, length, center, rotationTime):
+        pass
+
+    def rotateSqauareFormation(self, droneAmount, sideLength, center, rotationTime):
+        if droneAmount < 4:
+            return self.rotateLineFormation(droneAmount, sideLength, center, rotationTime)
+        targets = []
+        corners = [(1,1) , (1, -1), (-1, -1), (-1, 1)]
+        pheta = (int(time()) % rotationTime) / rotationTime * 2 * math.pi
+        for i in range(4):
+            drones = droneAmount // 4
+            if i < droneAmount % 4:
+                drones += 1
+            for j in range(drones):
+                
+                x = (corners[i][0] * sideLength / 2 + (corners[i-1][0] - corners[i][0]) * j/drones * sideLength /2)
+                y = (corners[i][1] * sideLength / 2 + (corners[i-1][1] - corners[i][1]) * j/drones * sideLength /2)
+                rotatedX = x *math.cos(pheta) - y * math.sin(pheta)
+                rotatedy = x * math.sin(pheta) + y* math.cos(pheta)
+                targets.append((int(rotatedX + center[0]), int(rotatedy + center[1])))
+        
+        
+        return targets
+            
+        
+
+    def RotateCircleFormation(self, droneAmount, radius, center, Rotationtime):
         #function to rotate the drones in a circle
         targets = []
         for i in range(droneAmount):
