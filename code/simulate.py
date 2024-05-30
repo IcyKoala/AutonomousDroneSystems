@@ -19,7 +19,7 @@ def drawSquare(x, y, color = 0):
     else:
         pygame.draw.rect(screen, (255, 255, 255), (x*10, y*10, 10, 10))
 
-drones = [Drone(i) for i in range(8)]
+drones = [Drone(i) for i in range(60)]
 for drone in drones:
     drone.setPosition((random.randint(0,99), random.randint(0,99)))
    
@@ -38,7 +38,8 @@ while running:
     # Render the screen
     screen.fill((0, 0, 0))
   
-    targets = pathPlanning.PathPlanning.RotateCircleFormation(len(drones), 20, (50,50), 30)
+    targets = pathPlanning.PathPlanning.RotateCircleFormation(len(drones), 35, (50,50), 120)
+    
 
     for target in targets:
         drawSquare(target[0], target[1], 2)
@@ -48,7 +49,7 @@ while running:
 
     for drone in drones:
         path = star.findPath(drone.getPosition(), drone.getTarget())
-  
+   
         drawSquare(drone.getPosition()[0], drone.getPosition()[1], 0)
         drone.setPosition(path)
         drawSquare(drone.getPosition()[0], drone.getPosition()[1], 1)

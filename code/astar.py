@@ -1,38 +1,49 @@
-from hungarian_algorithm import algorithm 
+from scipy.optimize import linear_sum_assignment
+import numpy as np
 from Drone import Drone
 
 class Astar:
     def findPath(self, start, end):
-        return self.aStarSearch(start, end, 0)
+        result = self.aStarSearch(start, end, 0)
+        
+        for i in range(3):
+            for j in range(3):
+                self.grid[result[0]+1-i][result[1]+1-j] = 1
+
+
+        return result
 
     def calc_targets(self, drones, targets):
+        
         self.grid = [[0 for j in range(100)] for i in range(100)]
-        dp = {}
+        weights = []
+        location = []
+
+        for drone in drones:
+
+                    self.grid[drone.getPosition()[0]][drone.getPosition()[1]] = 1
+
+        
         if len(targets) == 0:   
             return
         for index in range(len(drones)):
-            dp[str(index)] = {}
+            temp1 = []
+            temp2 = []
             for target in targets:
                 xdist = abs(drones[index].getPosition()[0] - target[0])
                 ydist = abs(drones[index].getPosition()[1] - target[1])
                 dist = xdist + ydist + 1
-                dp[str(index)][str(target)]= dist
-
-        print(dp)
-        paths = algorithm.find_matching(dp, matching_type = 'min', return_type = 'list')
-      
-        print (paths)
-        for path in paths:
-            name = path[0][0]
-            print(name)
-            loc = path[0][1][1:-1]
-            loc = loc.split(",")
-            x = loc[0]
-            y = loc[1][1:]
-            targetpos = [int(x),int(y)]
-
-            drones[int(name)].setTarget(targetpos)
-       
+                temp1.append(dist)
+                temp2.append(target)
+            weights.append(temp1)
+            location.append(temp2)
+                
+        
+        row_ind, col_ind = linear_sum_assignment(weights)
+     
+        for i in range(len(row_ind)):
+            drones[i].setTarget(location[row_ind[i]][col_ind[i]])
+        
         return drones
             
         
@@ -76,8 +87,11 @@ class Astar:
         return Path[1]
     
     def aStarSearch(self,start , end, dist = 0):
+        start = (start[0], start[1])
+        end = (end[0], end[1])
+                
         if not self.isvalid(start):
-            print("Start is invalid")
+         
             if dist == 1:
                 return 1000
             return start
@@ -95,9 +109,10 @@ class Astar:
             return start
         
         if start == end:
-            print("Start and End are same")
+         
             if dist == 1:
                 return 0
+            
             return start
         
         # Initialize the closed list
