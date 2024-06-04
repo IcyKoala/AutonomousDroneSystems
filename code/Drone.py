@@ -2,9 +2,8 @@ import cflib.crtp
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from cflib.positioning.motion_commander import MotionCommander
 from camera import CameraDetector
+import math
 import cv2
-
-import cv2 as cv
 
 manualMovementDistance = 0.1
 URI = 'radio://0/80/2M/E7E7E7E7E7'
@@ -80,6 +79,47 @@ class DroneController:
                 detector.release()
                 cv2.destroyAllWindows()
 
+    def lookAtCenter():
+        detector = CameraDetector()
+        print('Automatic control')
+        autoControl = True
+
+        with SyncCrazyflie(URI) as scf:
+            with MotionCommander(scf, 0.2) as mc:
+                while autoControl:
+                    frame = detector.get_frame()
+                    if frame is None:
+                        continue
+
+                    center = detector.detectTriangle(frame)
+
+                    if center is not None:
+                        cv2.imshow('frame', center)
+
+                    droneDir = [1,0]
+                    dronePos = center
+                    targetPos = [-1, 2]
+
+                    targetRad = math.atan2(targetPos[1]-dronePos[1], targetPos[0]-dronePos[0])
+                    targetAngle = math.degrees (targetRad)
+                    print(targetAngle)
+
+                    droneRad = math.atan2(droneDir[1], droneDir[0])
+                    droneAngle = math.degrees (droneRad)
+                    print(droneAngle)
+                    change = targetAngle-droneAngle
+                    if abs(change) > 180: 
+                        change += 360
+                    if change > 0:
+                        mc.turn_right(change)
+                    else:
+                        mc.turn_left(change)
+
+                detector.release()
+                cv2.destroyAllWindows()
+
+        
+       
 
 
 class Drone:
