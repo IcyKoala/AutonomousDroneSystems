@@ -3,6 +3,7 @@ from Drone import Drone
 from astar import Astar
 import pathPlanning
 import random
+import requests
 
 # Initialize pygame
 pygame.init()
@@ -19,7 +20,7 @@ def drawSquare(x, y, color = 0):
     else:
         pygame.draw.rect(screen, (255, 255, 255), (x*10, y*10, 10, 10))
 
-drones = [Drone(i) for i in range(20)]
+drones = [Drone(i) for i in range(5)]
 for drone in drones:
     drone.setPosition((random.randint(0,99), random.randint(0,99)))
 
@@ -36,32 +37,21 @@ while running:
         elif event.type == pygame.KEYDOWN:
             mode = not mode
 
-
-    # Update game logic
-
-    # Render the screen
+    # Update the display
     screen.fill((0, 0, 0))
-    planning = pathPlanning.PathPlanning()
-    if mode:
-        targets = planning.rotateSqauareFormation(len(drones), 35, (50,50), 40)
-    else:
-        targets = planning.RotateCircleFormation(len(drones), 35, (50,50), 100)
+    json = [] 
     
-    
-    for target in targets:
-        drawSquare(target[0], target[1], 2)
-    drones = star.calc_targets(drones, targets)
-    
-   
+    for index in range(len(drones)):
+        json.append({'id': index, 'x': drones[index].getPosition()[0], 'y': drones[index].getPosition()[1]})
 
-
+    response = requests.post('http://localhost:23336/', json=json)
+    print(response)
+    data = response.json()
+    for drone in data:
+        drones[drone['id']].setPosition((drone['x'], drone['y']))
     for drone in drones:
-        path = star.findPath(drone.getPosition(), drone.getTarget())
-   
-        drawSquare(drone.getPosition()[0], drone.getPosition()[1], 0)
-        drone.setPosition(path)
         drawSquare(drone.getPosition()[0], drone.getPosition()[1], 1)
-
+        
     pygame.display.flip()
 
 # Quit pygame
