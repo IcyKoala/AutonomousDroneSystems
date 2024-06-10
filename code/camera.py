@@ -10,6 +10,12 @@ class CameraDetector:
         self.lock = threading.Lock()
         self.running = True
 
+        # Define color ranges for red and green triangles (BGR format)
+        self.red_lower = np.array([0, 0, 100])
+        self.red_upper = np.array([100, 100, 255])
+        self.green_lower = np.array([0, 80, 0])
+        self.green_upper = np.array([100, 255, 100])
+
         # Start the video capture thread
         self.capture_thread = threading.Thread(target=self.update_frame, daemon=True)
         self.capture_thread.start()
@@ -29,11 +35,11 @@ class CameraDetector:
     def detectTriangle(self, frame):
         '''
         Takes video stream frame
-        Returns a list of all triangles and their corners
+        Returns the centers and orientation vectors of red and green triangles
         '''
 
         if frame is None:
-            return None
+            return None, None, frame
 
         frame2 = imutils.resize(frame, width=1080, height=1920)
 
@@ -49,17 +55,23 @@ class CameraDetector:
         # Find contours
         contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        # List to store points of triangles
-        triangle_points = []
-
         displayframe = frame2.copy()
         self.drawGrid(displayframe)
-        center = (0, 0)
-        orientation_vector = [0,0]
+
+        red_center = None
+        red_orientation_vector = None
+        green_center = None
+        green_orientation_vector = None
+
+        found_red = False
+        found_green = False
 
         for contour in contours:
+            if found_red and found_green:
+                break
+
             area = cv2.contourArea(contour)
-            if area < 100 or area > 10000:  # Area filtering to ignore small contours
+            if area < 50 or area > 10000:  # Area filtering to ignore small contours
                 continue
 
             # Approximate contour
@@ -72,25 +84,39 @@ class CameraDetector:
                 if not cv2.isContourConvex(approx):
                     continue
                 center = self.getCenter(approx)
-                color = self.checkColor(frame, center)
-                # print(center)
+                color = self.checkColor(frame2, center)
+
+                # Check if the color is within the specified range for red
+                if not found_red and self.isColorInRange(color, self.red_lower, self.red_upper):
+                    red_center = center
+                    red_orientation_vector = self.checkOrientation(center, approx)
+                    cv2.drawContours(displayframe, [approx], 0, (0, 0, 255), 2)
+                    cv2.circle(displayframe, center, 5, (0, 255, 0), -1)
+                    cv2.putText(displayframe, 'Red Triangle', center, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                    endpoint = (center[0] + red_orientation_vector[0], center[1] + red_orientation_vector[1])
+                    cv2.line(displayframe, center, endpoint, (255, 0, 0), 2)
+                    found_red = True
+
+                # Check if the color is within the specified range for green
+                elif not found_green and self.isColorInRange(color, self.green_lower, self.green_upper):
+                    green_center = center
+                    green_orientation_vector = self.checkOrientation(center, approx)
+                    cv2.drawContours(displayframe, [approx], 0, (0, 255, 0), 2)
+                    cv2.circle(displayframe, center, 5, (255, 0, 0), -1)
+                    cv2.putText(displayframe, 'Green Triangle', center, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+                    endpoint = (center[0] + green_orientation_vector[0], center[1] + green_orientation_vector[1])
+                    cv2.line(displayframe, center, endpoint, (0, 255, 0), 2)
+                    found_green = True
+
+        return (red_center, red_orientation_vector), (green_center, green_orientation_vector), displayframe
 
 
-                # if color[2] < 150 or color[0] > 120 or color[1] > 120:
-                #     continue
-                print(color)
-                triangle_points.append(approx)
 
-                cv2.drawContours(displayframe, [approx], 0, (0, 0, 255), 2)
-                cv2.circle(displayframe, (800, 500), 5, (0, 255, 0), -1)
-                cv2.circle(displayframe, center, 5, (0, 255, 0), -1)
-                cv2.putText(displayframe, 'Triangle', center, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-                orientation_vector = self.checkOrientation(center, approx)
-                endpoint = (center[0] + orientation_vector[0], center[1] + orientation_vector[1])
-                cv2.line(displayframe, center, endpoint, (255, 0, 0), 2)
-
-        return center, orientation_vector,displayframe
+    def isColorInRange(self, color, lower, upper):
+        """
+        Check if a given BGR color is within the specified range.
+        """
+        return np.all(lower <= color) and np.all(color <= upper)
 
     def checkColor(self, frame, centerPoint):
         """
