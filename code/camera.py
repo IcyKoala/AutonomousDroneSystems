@@ -5,7 +5,7 @@ import imutils
 
 class CameraDetector:
     def __init__(self) -> None:
-        self.cap = cv2.VideoCapture('https://145.24.238.206:8080///video')
+        self.cap = cv2.VideoCapture('https://145.137.54.71:8080///video')
         self.frame = None
         self.lock = threading.Lock()
         self.running = True
