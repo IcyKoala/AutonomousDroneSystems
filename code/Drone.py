@@ -4,6 +4,7 @@ from cflib.positioning.motion_commander import MotionCommander
 from camera import CameraDetector
 import math
 import cv2
+import time
 
 manualMovementDistance = 0.1
 URI = 'radio://0/80/2M/E7E7E7E7E7'
@@ -44,10 +45,9 @@ class DroneController:
                             mc.right(manualMovementDistance)
                         case "I":
                             mc.down(0.4)
-                            mc.land
+                            mc.land()
                             manualControl = False
                             break
-
 
     def findCenter(self):
         detector = CameraDetector()
@@ -55,50 +55,53 @@ class DroneController:
         autoControl = True
 
         with SyncCrazyflie(URI) as scf:
-            with MotionCommander(scf, 0.2) as mc:
+            with MotionCommander(scf, 0.1) as mc:
                 while autoControl:
                     frame = detector.get_frame()
                     if frame is None:
                         continue
 
-                    center = detector.detectTriangle(frame)
+                    center, orientation_vector, frame_with_triangles = detector.detectTriangle(frame)
 
                     if center is not None:
-                        cv2.imshow('frame', center)
+                        if center[0] < 850:
+                            mc.left(0.1)
+                        else:
+                            mc.right(0.1)
+                        if center[1] < 500:
+                            mc.forward(0.1)
+                        else:
+                            mc.back(0.1)
 
-                    if center[1] < 500:
-                        mc.right(0.1)
-                    else:
-                        mc.left(0.1)
-                    if center[0] < 500:
-                        mc.forward(0.1)
-                    else:
-                        mc.back(0.1)
+                    center = None
 
+                    cv2.imshow('frame', frame_with_triangles)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        autoControl = False
+                        break
 
                 detector.release()
                 cv2.destroyAllWindows()
 
-    def lookAtCenter():
+    def lookAtCenter(self):
         detector = CameraDetector()
         print('Automatic control')
         autoControl = True
 
         with SyncCrazyflie(URI) as scf:
             with MotionCommander(scf, 0.2) as mc:
+                time.sleep(3)
                 while autoControl:
                     frame = detector.get_frame()
                     if frame is None:
                         continue
 
-                    center = detector.detectTriangle(frame)
+                    center, orientation_vector, frame_with_triangles = detector.detectTriangle(frame)
 
-                    if center is not None:
-                        cv2.imshow('frame', center)
 
-                    droneDir = [1,0]
+                    droneDir = orientation_vector
                     dronePos = center
-                    targetPos = [-1, 2]
+                    targetPos = [100,100]
 
                     targetRad = math.atan2(targetPos[1]-dronePos[1], targetPos[0]-dronePos[0])
                     targetAngle = math.degrees (targetRad)
@@ -108,12 +111,25 @@ class DroneController:
                     droneAngle = math.degrees (droneRad)
                     print(droneAngle)
                     change = targetAngle-droneAngle
-                    if abs(change) > 180: 
+                    print(change)
+                    if abs(change) > 180:
                         change += 360
-                    if change > 0:
+                    if change > 25:
                         mc.turn_right(change)
+                        time.sleep(0.5)
+                    elif change < -25:
+                        mc.turn_left(abs(change))
+                        time.sleep(0.5)
                     else:
-                        mc.turn_left(change)
+                        mc.forward(0.05)
+
+                    if (center[0] > targetPos[0] - 50 and center[0] < targetPos[0] + 50) and (center[1] > targetPos[1] - 50 and center[1] < targetPos[1] + 50):
+                        autoControl = False
+                        print('WINNNNNNNNNNNNNNNNNNNNNNNNjkewhf;oishfhdakdhauisdNNNN')
+
+                    cv2.imshow('frame', frame_with_triangles)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break
 
                 detector.release()
                 cv2.destroyAllWindows()
@@ -124,19 +140,22 @@ class DroneController:
 
 class Drone:
     def __init__(self, colour) -> None:
-        self.positon = (0,0) 
-        self.target = (0,0)
+        self.position = (0, 0)
+        self.target = (0, 0)
         self.colour = colour
-        pass
 
     def getPosition(self):
-         return self.position
-    
+        return self.position
+
     def getTarget(self):
         return self.target
-    
-    def setPosition(self,position):
-            self.position = position
-    
-    def setTarget(self,target):
-         self.target = target
+
+    def setPosition(self, position):
+        self.position = position
+
+    def setTarget(self, target):
+        self.target = target
+
+if __name__ == '__main__':
+    controller = DroneController()
+    controller.lookAtCenter()

@@ -22,7 +22,7 @@ def drawSquare(x, y, color = 0):
 drones = [Drone(i) for i in range(20)]
 for drone in drones:
     drone.setPosition((random.randint(0,99), random.randint(0,99)))
-   
+
 
 # Game loop
 running = True

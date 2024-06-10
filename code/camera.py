@@ -1,10 +1,11 @@
 import cv2
 import numpy as np
 import threading
+import imutils
 
 class CameraDetector:
     def __init__(self) -> None:
-        self.cap = cv2.VideoCapture('https://145.137.78.29:8080//video')
+        self.cap = cv2.VideoCapture('https://145.24.238.206:8080///video')
         self.frame = None
         self.lock = threading.Lock()
         self.running = True
@@ -34,8 +35,10 @@ class CameraDetector:
         if frame is None:
             return None
 
+        frame2 = imutils.resize(frame, width=1080, height=1920)
+
         # Convert the frame to grayscale
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray_frame = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
 
         # Apply Gaussian blur to reduce noise
         blurred_frame = cv2.GaussianBlur(gray_frame, (5, 5), 0)
@@ -49,16 +52,18 @@ class CameraDetector:
         # List to store points of triangles
         triangle_points = []
 
-        displayframe = frame.copy()
+        displayframe = frame2.copy()
+        self.drawGrid(displayframe)
         center = (0, 0)
+        orientation_vector = [0,0]
 
         for contour in contours:
             area = cv2.contourArea(contour)
-            if area < 200 or area > 10000:  # Area filtering to ignore small contours
+            if area < 100 or area > 10000:  # Area filtering to ignore small contours
                 continue
 
             # Approximate contour
-            epsilon = 0.02 * cv2.arcLength(contour, True)
+            epsilon = 0.2 * cv2.arcLength(contour, True)
             approx = cv2.approxPolyDP(contour, epsilon, True)
 
             # Filter only triangles (3 vertices)
@@ -68,16 +73,16 @@ class CameraDetector:
                     continue
                 center = self.getCenter(approx)
                 color = self.checkColor(frame, center)
+                # print(center)
 
+
+                # if color[2] < 150 or color[0] > 120 or color[1] > 120:
+                #     continue
                 print(color)
-
-                if color[2] < 200 or color[0] > 100 or color[1] > 100:
-                    continue
-
                 triangle_points.append(approx)
 
                 cv2.drawContours(displayframe, [approx], 0, (0, 0, 255), 2)
-
+                cv2.circle(displayframe, (800, 500), 5, (0, 255, 0), -1)
                 cv2.circle(displayframe, center, 5, (0, 255, 0), -1)
                 cv2.putText(displayframe, 'Triangle', center, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
@@ -85,7 +90,7 @@ class CameraDetector:
                 endpoint = (center[0] + orientation_vector[0], center[1] + orientation_vector[1])
                 cv2.line(displayframe, center, endpoint, (255, 0, 0), 2)
 
-        return displayframe
+        return center, orientation_vector,displayframe
 
     def checkColor(self, frame, centerPoint):
         """
@@ -133,6 +138,11 @@ class CameraDetector:
 
         return orientation_vector
 
+    def drawGrid(self, frame):
+        for i in range(5):
+            cv2.rectangle(frame, (0, 0), (i * 200, i * 200), (0, 0, 0), 2)
+
+
     def get_frame(self):
         with self.lock:
             return self.frame.copy() if self.frame is not None else None
@@ -145,7 +155,7 @@ if __name__ == '__main__':
         if frame is None:
             continue
 
-        frame_with_triangles = detector.detectTriangle(frame)
+        center,orientation_vector, frame_with_triangles = detector.detectTriangle(frame)
 
         if frame_with_triangles is not None:
             cv2.imshow('frame', frame_with_triangles)
