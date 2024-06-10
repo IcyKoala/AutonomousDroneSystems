@@ -5,15 +5,39 @@ from camera import CameraDetector
 import math
 import cv2
 import time
+import threading
 
 manualMovementDistance = 0.1
-URI = 'radio://0/80/2M/E7E7E7E7E7'
+redURI = 'radio://0/80/2M/E7E7E7E7E7'
 cflib.crtp.init_drivers(enable_debug_driver=False)
 
 
 class DroneController:
     def __init__(self) -> None:
+        redDrone = Drone("RED")
+        self.droneList = [redDrone]
         pass
+
+    def setUri(self, drone):
+        match drone.getColour():
+            case "RED":
+                return redURI
+
+    def startDrones(self):
+        for drone in self.droneList:
+            self.lock = threading.Lock()
+            # Start the drone thread
+            self.capture_thread = threading.Thread(target=self.controlDrone(drone), daemon=True)
+            self.capture_thread.start()
+
+    def controlDrone(self, drone):
+         print(self.setUri(drone))
+         with SyncCrazyflie(self.setUri(drone)) as scf:
+            with MotionCommander(scf, 0.5) as mc:
+                print("Stop complaining")
+
+    
+            
 
     def move(drone, direction, range):
         # function to move the drone
@@ -39,7 +63,6 @@ class DroneController:
                         case "A":
                             print("turning left")
                             mc.left(manualMovementDistance)
-
                         case "D":
                             print("turning right")
                             mc.right(manualMovementDistance)
@@ -144,6 +167,9 @@ class Drone:
         self.target = (0, 0)
         self.colour = colour
 
+    def getColour(self):
+        return self.colour
+
     def getPosition(self):
         return self.position
 
@@ -158,4 +184,4 @@ class Drone:
 
 if __name__ == '__main__':
     controller = DroneController()
-    controller.lookAtCenter()
+    controller.startDrones()
