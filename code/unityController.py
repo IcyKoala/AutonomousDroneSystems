@@ -24,11 +24,12 @@ def gridtomap(x,y):
 
 @app.route('/', methods = ['POST']) 
 def index():
+    print("start")
     drones = [Drone(i) for i in range(5)]
     pathplanning = PathPlanning()
     star = Astar()
     data = request.get_json()
-    print(data)
+   
 
     for drone in data:
         drones[drone['id']].setPosition(maptogrid(drone['x'], drone['y']))
@@ -41,7 +42,7 @@ def index():
         path = star.findPath(drones[index].getPosition(), drones[index].getTarget())
         x, y = gridtomap(path[0], path[1])
         json.append({'id': index, "x" : x, "y" : y})
-    print (json)
+    print("end")
     return jsonify(json)
 
 

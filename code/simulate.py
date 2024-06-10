@@ -43,7 +43,7 @@ while running:
     
     for index in range(len(drones)):
         json.append({'id': index, 'x': drones[index].getPosition()[0], 'y': drones[index].getPosition()[1]})
-
+    print("test")
     response = requests.post('http://localhost:23336/', json=json)
     print(response)
     data = response.json()
