@@ -8,36 +8,33 @@ import time
 import threading
 
 manualMovementDistance = 0.1
-redURI = 'radio://0/80/2M/E7E7E7E7E7'
+URI = 'radio://0/80/2M/E7E7E7E7E7'
 cflib.crtp.init_drivers(enable_debug_driver=False)
 
 
 class DroneController:
     def __init__(self) -> None:
-        redDrone = Drone("RED")
-        self.droneList = [redDrone]
+        # redDrone = Drone("RED")
+        # self.droneList = [redDrone]
         pass
 
-    def setUri(self, drone):
-        match drone.getColour():
-            case "RED":
-                return redURI
+    # def setUri(self, drone):
+    #     match drone.getColour():
+    #         case "RED":
+    #             return redURI
+    #
+    # def startDrones(self):
+    #     for drone in self.droneList:
+    #         self.lock = threading.Lock()
+    #         # Start the drone thread
+    #         self.capture_thread = threading.Thread(target=self.controlDrone(drone), daemon=True)
+    #         self.capture_thread.start()
 
-    def startDrones(self):
-        for drone in self.droneList:
-            self.lock = threading.Lock()
-            # Start the drone thread
-            self.capture_thread = threading.Thread(target=self.controlDrone(drone), daemon=True)
-            self.capture_thread.start()
-
-    def controlDrone(self, drone):
-         print(self.setUri(drone))
-         with SyncCrazyflie(self.setUri(drone)) as scf:
-            with MotionCommander(scf, 0.5) as mc:
-                print("Stop complaining")
-
-    
-            
+    # def controlDrone(self, drone):
+    #      print(self.setUri(drone))
+    #      with SyncCrazyflie(self.setUri(drone)) as scf:
+    #         with MotionCommander(scf, 0.5) as mc:
+    #             print("Stop complaining")
 
     def move(drone, direction, range):
         # function to move the drone
@@ -119,21 +116,20 @@ class DroneController:
                     if frame is None:
                         continue
 
-                    center, orientation_vector, frame_with_triangles = detector.detectTriangle(frame)
+                    center, dir2, frame_with_triangles = detector.detectTriangle(frame)
 
-
-                    droneDir = orientation_vector
+                    droneDir = dir2
                     dronePos = center
-                    targetPos = [100,100]
+                    targetPos = [100, 100]
 
-                    targetRad = math.atan2(targetPos[1]-dronePos[1], targetPos[0]-dronePos[0])
-                    targetAngle = math.degrees (targetRad)
+                    targetRad = math.atan2(targetPos[1] - dronePos[1], targetPos[0] - dronePos[0])
+                    targetAngle = math.degrees(targetRad)
                     print(targetAngle)
 
                     droneRad = math.atan2(droneDir[1], droneDir[0])
-                    droneAngle = math.degrees (droneRad)
+                    droneAngle = math.degrees(droneRad)
                     print(droneAngle)
-                    change = targetAngle-droneAngle
+                    change = targetAngle - droneAngle
                     print(change)
                     if abs(change) > 180:
                         change += 360
@@ -146,7 +142,8 @@ class DroneController:
                     else:
                         mc.forward(0.05)
 
-                    if (center[0] > targetPos[0] - 50 and center[0] < targetPos[0] + 50) and (center[1] > targetPos[1] - 50 and center[1] < targetPos[1] + 50):
+                    if (center[0] > targetPos[0] - 50 and center[0] < targetPos[0] + 50) and (
+                            center[1] > targetPos[1] - 50 and center[1] < targetPos[1] + 50):
                         autoControl = False
                         print('WINNNNNNNNNNNNNNNNNNNNNNNNjkewhf;oishfhdakdhauisdNNNN')
 
@@ -156,9 +153,6 @@ class DroneController:
 
                 detector.release()
                 cv2.destroyAllWindows()
-
-        
-       
 
 
 class Drone:
@@ -182,6 +176,7 @@ class Drone:
     def setTarget(self, target):
         self.target = target
 
+
 if __name__ == '__main__':
     controller = DroneController()
-    controller.startDrones()
+    controller.lookAtCenter()

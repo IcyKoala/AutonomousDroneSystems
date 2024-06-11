@@ -5,16 +5,16 @@ import imutils
 
 class CameraDetector:
     def __init__(self) -> None:
-        self.cap = cv2.VideoCapture('https://145.137.54.71:8080///video')
+        self.cap = cv2.VideoCapture('https://145.24.238.206:8080///video')
         self.frame = None
         self.lock = threading.Lock()
         self.running = True
 
         # Define color ranges for red and green triangles (BGR format)
-        self.red_lower = np.array([0, 0, 100])
-        self.red_upper = np.array([100, 100, 255])
-        self.green_lower = np.array([0, 80, 0])
-        self.green_upper = np.array([100, 255, 100])
+        self.red_lower = np.array([70, 70, 140])
+        self.red_upper = np.array([150, 150, 255])
+        self.green_lower = np.array([40, 180, 40])
+        self.green_upper = np.array([150, 255, 150])
 
         # Start the video capture thread
         self.capture_thread = threading.Thread(target=self.update_frame, daemon=True)
@@ -88,6 +88,7 @@ class CameraDetector:
 
                 # Check if the color is within the specified range for red
                 if not found_red and self.isColorInRange(color, self.red_lower, self.red_upper):
+                    print('RED ' + str(color))
                     red_center = center
                     red_orientation_vector = self.checkOrientation(center, approx)
                     cv2.drawContours(displayframe, [approx], 0, (0, 0, 255), 2)
@@ -99,6 +100,7 @@ class CameraDetector:
 
                 # Check if the color is within the specified range for green
                 elif not found_green and self.isColorInRange(color, self.green_lower, self.green_upper):
+                    print('GREEN ' + str(color))
                     green_center = center
                     green_orientation_vector = self.checkOrientation(center, approx)
                     cv2.drawContours(displayframe, [approx], 0, (0, 255, 0), 2)
@@ -108,7 +110,7 @@ class CameraDetector:
                     cv2.line(displayframe, center, endpoint, (0, 255, 0), 2)
                     found_green = True
 
-        return (red_center, red_orientation_vector), (green_center, green_orientation_vector), displayframe
+        return red_center, red_orientation_vector, displayframe #(green_center, green_orientation_vector)
 
 
 
