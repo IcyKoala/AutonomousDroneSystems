@@ -172,8 +172,7 @@ class Astar:
                             cellDetails[iNew][jNew]["parent_i"] = i
                             cellDetails[iNew][jNew]["parent_j"] = j
 
-        if foundDest == False:
-            print("Failed to find the destination cell")
+        
         return start
     
 

@@ -2,37 +2,39 @@ import threading
 from astar import Astar
 from Drone import Drone
 from pathPlanning import PathPlanning
-from flask import Flask, request, jsonify
-
+from flask import Flask, request
+from json import JSONDecoder
 
 
 
 gridSize = [8,8]
 pathPlanning = PathPlanning()
 
-host_name = "0.0.0.0"
-port = 23336
+host_name = "145.137.1.94"
+port = 8080
 app = Flask(__name__)
 
 def maptogrid(x,y):
-    return (x,y)
+    #return (x,y)
     return (int(x/8*100), int(y/8*100))
 
 def gridtomap(x,y):
-    return (x,y)
-    return (int(x/100*8), int(y/100*8))
+    #return (x,y)
+    return ((x/100*8), (y/100*8))
 
 @app.route('/', methods = ['POST']) 
 def index():
-    print("start")
+    
+    
     drones = [Drone(i) for i in range(5)]
     pathplanning = PathPlanning()
     star = Astar()
     data = request.get_json()
    
+   
 
     for drone in data:
-        drones[drone['id']].setPosition(maptogrid(drone['x'], drone['y']))
+        drones[drone['droneID']].setPosition(maptogrid(drone['x'], drone['z']))
     
     pathplanning = PathPlanning()
     targets = pathplanning.RotateCircleFormation(len(drones), 35, (50,50), 40)
@@ -41,9 +43,9 @@ def index():
     for index in range(len(drones)):
         path = star.findPath(drones[index].getPosition(), drones[index].getTarget())
         x, y = gridtomap(path[0], path[1])
-        json.append({'id': index, "x" : x, "y" : y})
-    print("end")
-    return jsonify(json)
+        json.append({'droneID': index, "x" : x, "z" : y , "y": 1})
+    
+    return json
 
 
     
