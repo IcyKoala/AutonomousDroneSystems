@@ -13,7 +13,7 @@ p1 = "radio://0/"
 p2 = "/2M/E7E7E7E7E7"
 cflib.crtp.init_drivers(enable_debug_driver=False)
 
-for i in range (100):
+for i in range (125):
     if i == 80:
         continue
     try:

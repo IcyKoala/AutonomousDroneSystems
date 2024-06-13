@@ -9,19 +9,23 @@ import threading
 
 manualMovementDistance = 0.1
 redURI = 'radio://0/80/2M/E7E7E7E7E7'
+greenURI = 'radio://0/20/2M/E7E7E7E7E7'
 cflib.crtp.init_drivers(enable_debug_driver=False)
 
 
 class DroneController:
     def __init__(self) -> None:
         redDrone = Drone("RED")
-        self.droneList = [redDrone]
+        greenDrone = Drone("GREEN")
+        self.droneList = [greenDrone, redDrone]
         pass
 
     def setUri(self, drone):
         match drone.getColour():
             case "RED":
                 return redURI
+            case "GREEN":
+                return greenURI
 
     def startDrones(self):
         for drone in self.droneList:
@@ -35,6 +39,7 @@ class DroneController:
          with SyncCrazyflie(self.setUri(drone)) as scf:
             with MotionCommander(scf, 0.5) as mc:
                 print("Stop complaining")
+                time.sleep(5)
 
     
             
@@ -47,7 +52,7 @@ class DroneController:
         print('Manual control')
         manualControl = True
 
-        with SyncCrazyflie(URI) as scf:
+        with SyncCrazyflie(redURI) as scf:
             with MotionCommander(scf, 0.5) as mc:
                 while manualControl:
                     print('Takeoff')
@@ -77,7 +82,7 @@ class DroneController:
         print('Automatic control')
         autoControl = True
 
-        with SyncCrazyflie(URI) as scf:
+        with SyncCrazyflie(redURI) as scf:
             with MotionCommander(scf, 0.1) as mc:
                 while autoControl:
                     frame = detector.get_frame()
@@ -111,7 +116,7 @@ class DroneController:
         print('Automatic control')
         autoControl = True
 
-        with SyncCrazyflie(URI) as scf:
+        with SyncCrazyflie(greenURI) as scf:
             with MotionCommander(scf, 0.2) as mc:
                 time.sleep(3)
                 while autoControl:
