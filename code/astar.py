@@ -6,8 +6,8 @@ class Astar:
     def findPath(self, start, end):
         result = self.aStarSearch(start, end, 0)
         
-        for i in range(3):
-            for j in range(3):
+        for i in range(1):
+            for j in range(1):
                 self.grid[result[0]+1-i][result[1]+1-j] = 1
 
 
@@ -15,7 +15,7 @@ class Astar:
 
     def calc_targets(self, drones, targets):
         
-        self.grid = [[0 for j in range(100)] for i in range(100)]
+        self.grid = [[0 for j in range(40)] for i in range(40)]
         weights = []
         location = []
 
