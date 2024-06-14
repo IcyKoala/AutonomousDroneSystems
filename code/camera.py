@@ -11,8 +11,8 @@ class CameraDetector:
         self.running = True
 
         # Define color ranges for red and green triangles (BGR format)
-        self.red_lower = np.array([70, 70, 140])
-        self.red_upper = np.array([150, 150, 255])
+        self.red_lower = np.array([70, 70, 170])
+        self.red_upper = np.array([150, 150, 256])
         self.green_lower = np.array([40, 180, 40])
         self.green_upper = np.array([150, 255, 150])
 
@@ -71,7 +71,7 @@ class CameraDetector:
                 break
 
             area = cv2.contourArea(contour)
-            if area < 50 or area > 10000:  # Area filtering to ignore small contours
+            if area < 100 or area > 10000:  # Area filtering to ignore small contours
                 continue
 
             # Approximate contour
@@ -109,7 +109,6 @@ class CameraDetector:
                     endpoint = (center[0] + green_orientation_vector[0], center[1] + green_orientation_vector[1])
                     cv2.line(displayframe, center, endpoint, (0, 255, 0), 2)
                     found_green = True
-
         return red_center, red_orientation_vector, displayframe #(green_center, green_orientation_vector)
 
 

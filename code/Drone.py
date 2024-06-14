@@ -8,7 +8,7 @@ import time
 import threading
 
 manualMovementDistance = 0.1
-URI = 'radio://0/80/2M/E7E7E7E7E7'
+URI = 'radio://0/20/2M/E7E7E7E7E7'
 cflib.crtp.init_drivers(enable_debug_driver=False)
 
 
@@ -117,39 +117,48 @@ class DroneController:
                         continue
 
                     center, dir2, frame_with_triangles = detector.detectTriangle(frame)
+                    updatedFrame = True
 
-                    droneDir = dir2
-                    dronePos = center
-                    targetPos = [100, 100]
+                    if center is not None and dir2 is not None:
+                        while(updatedFrame):
+                            droneDir = dir2
+                            dronePos = center
+                            targetPos = [300, 300]
 
-                    targetRad = math.atan2(targetPos[1] - dronePos[1], targetPos[0] - dronePos[0])
-                    targetAngle = math.degrees(targetRad)
-                    print(targetAngle)
+                            targetRad = math.atan2(targetPos[1] - dronePos[1], targetPos[0] - dronePos[0])
+                            targetAngle = math.degrees(targetRad)
+                            print(targetAngle)
 
-                    droneRad = math.atan2(droneDir[1], droneDir[0])
-                    droneAngle = math.degrees(droneRad)
-                    print(droneAngle)
-                    change = targetAngle - droneAngle
-                    print(change)
-                    if abs(change) > 180:
-                        change += 360
-                    if change > 25:
-                        mc.turn_right(change)
-                        time.sleep(0.5)
-                    elif change < -25:
-                        mc.turn_left(abs(change))
-                        time.sleep(0.5)
-                    else:
-                        mc.forward(0.05)
+                            droneRad = math.atan2(droneDir[1], droneDir[0])
+                            droneAngle = math.degrees(droneRad)
+                            print(droneAngle)
+                            change = targetAngle - droneAngle
+                            print(change)
+                            if abs(change) > 180:
+                                change += 360
+                            if change > 25:
+                                mc.turn_right(change)
+                                time.sleep(0.5)
+                            elif change < -25:
+                                mc.turn_left(abs(change))
+                                time.sleep(0.5)
+                            else:
+                                distancex = abs(center[0] - targetPos[0])
+                                distancey = abs(center[1] - targetPos[1])
+                                distance = (math.sqrt(distancex**2 + distancey**2) / 3.84) * 100
+                                mc.forward(distance)
 
-                    if (center[0] > targetPos[0] - 50 and center[0] < targetPos[0] + 50) and (
-                            center[1] > targetPos[1] - 50 and center[1] < targetPos[1] + 50):
-                        autoControl = False
-                        print('WINNNNNNNNNNNNNNNNNNNNNNNNjkewhf;oishfhdakdhauisdNNNN')
 
-                    cv2.imshow('frame', frame_with_triangles)
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
+                            if (center[0] > targetPos[0] - 50 and center[0] < targetPos[0] + 50) and (
+                                    center[1] > targetPos[1] - 50 and center[1] < targetPos[1] + 50):
+                                autoControl = False
+                                print('WINNNNNNNNNNNNNNNNNNNNNNNNjkewhf;oishfhdakdhauisdNNNN')
+                            mc.stop()
+                            updatedFrame = False
+
+                        cv2.imshow('frame', frame_with_triangles)
+                        if cv2.waitKey(1) & 0xFF == ord('q'):
+                            break
 
                 detector.release()
                 cv2.destroyAllWindows()
