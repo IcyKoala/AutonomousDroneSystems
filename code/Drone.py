@@ -130,7 +130,7 @@ class DroneController:
         with SyncCrazyflie(redURI) as scf:
             with MotionCommander(scf, 0.2) as mc:
                 time.sleep(1)
-                targetPos = planning.RotateCircleFormation(1,250,(500,300), 30)
+                targetPos = planning.RotateCircleFormation(1,250,(500,300), 30)[0]
                 while autoControl:
                     frame = detector.get_frame()
                     if frame is None:
@@ -140,7 +140,6 @@ class DroneController:
                     updatedFrame = True
 
                     cv2.rectangle(frame_with_triangles, targetPos, targetPos, (0, 0, 255), 10)
-
                     if center is not None and dir2 is not None:
                         while(updatedFrame):
                             droneDir = dir2
@@ -163,7 +162,7 @@ class DroneController:
                             if (center[0] > targetPos[0] - 100 and center[0] < targetPos[0] + 100) and (
                                     center[1] > targetPos[1] - 100 and center[1] < targetPos[1] + 100):
                                 # autoControl = False
-                                targetPos = planning.RotateCircleFormation(1,250,(500,300), 30)
+                                targetPos = planning.RotateCircleFormation(1,250,(500,300), 30)[0]
 
                             elif change > 25:
                                 mc.turn_right(change)
