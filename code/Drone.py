@@ -6,6 +6,8 @@ import math
 import cv2
 import time
 import threading
+import pathPlanning
+import astar
 from random import randrange
 
 manualMovementDistance = 0.1
@@ -120,13 +122,15 @@ class DroneController:
 
     def lookAtCenter(self):
         detector = CameraDetector()
+        a_star = astar.Astar()
+        planning = pathPlanning.PathPlanning()
         print('Automatic control')
         autoControl = True
 
         with SyncCrazyflie(redURI) as scf:
             with MotionCommander(scf, 0.2) as mc:
                 time.sleep(1)
-                targetPos = [300, 300]
+                targetPos = planning.RotateCircleFormation(1,250,(500,300), 30)
                 while autoControl:
                     frame = detector.get_frame()
                     if frame is None:
@@ -159,8 +163,8 @@ class DroneController:
                             if (center[0] > targetPos[0] - 100 and center[0] < targetPos[0] + 100) and (
                                     center[1] > targetPos[1] - 100 and center[1] < targetPos[1] + 100):
                                 # autoControl = False
-                                targetPos = self.generateCor()
-                                print('WINNNNNNNNNNNNNNNNNNNNNNNNjkewhf;oishfhdakdhauisdNNNN')
+                                targetPos = planning.RotateCircleFormation(1,250,(500,300), 30)
+
                             elif change > 25:
                                 mc.turn_right(change)
                             elif change < -25:
