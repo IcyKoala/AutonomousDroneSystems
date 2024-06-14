@@ -124,46 +124,52 @@ class DroneController:
                     if frame is None:
                         continue
 
-                    center, orientation_vector, frame_with_triangles = detector.detectTriangle(frame)
+                    center, dir2, frame_with_triangles = detector.detectTriangle(frame)
+                    updatedFrame = True
+
+                    if center is not None and dir2 is not None:
+                        while(updatedFrame):
+                            droneDir = dir2
+                            dronePos = center
+                            targetPos = [300, 300]
+
+                            targetRad = math.atan2(targetPos[1] - dronePos[1], targetPos[0] - dronePos[0])
+                            targetAngle = math.degrees(targetRad)
+                            print(targetAngle)
+
+                            droneRad = math.atan2(droneDir[1], droneDir[0])
+                            droneAngle = math.degrees(droneRad)
+                            print(droneAngle)
+                            change = targetAngle - droneAngle
+                            print(change)
+                            if abs(change) > 180:
+                                change += 360
+                            if change > 25:
+                                mc.turn_right(change)
+                                time.sleep(0.5)
+                            elif change < -25:
+                                mc.turn_left(abs(change))
+                                time.sleep(0.5)
+                            else:
+                                distancex = abs(center[0] - targetPos[0])
+                                distancey = abs(center[1] - targetPos[1])
+                                distance = (math.sqrt(distancex**2 + distancey**2) / 3.84) * 100
+                                mc.forward(distance)
 
 
-                    droneDir = orientation_vector
-                    dronePos = center
-                    targetPos = [100,100]
+                            if (center[0] > targetPos[0] - 50 and center[0] < targetPos[0] + 50) and (
+                                    center[1] > targetPos[1] - 50 and center[1] < targetPos[1] + 50):
+                                autoControl = False
+                                print('WINNNNNNNNNNNNNNNNNNNNNNNNjkewhf;oishfhdakdhauisdNNNN')
+                            mc.stop()
+                            updatedFrame = False
 
-                    targetRad = math.atan2(targetPos[1]-dronePos[1], targetPos[0]-dronePos[0])
-                    targetAngle = math.degrees (targetRad)
-                    print(targetAngle)
-
-                    droneRad = math.atan2(droneDir[1], droneDir[0])
-                    droneAngle = math.degrees (droneRad)
-                    print(droneAngle)
-                    change = targetAngle-droneAngle
-                    print(change)
-                    if abs(change) > 180:
-                        change += 360
-                    if change > 25:
-                        mc.turn_right(change)
-                        time.sleep(0.5)
-                    elif change < -25:
-                        mc.turn_left(abs(change))
-                        time.sleep(0.5)
-                    else:
-                        mc.forward(0.05)
-
-                    if (center[0] > targetPos[0] - 50 and center[0] < targetPos[0] + 50) and (center[1] > targetPos[1] - 50 and center[1] < targetPos[1] + 50):
-                        autoControl = False
-                        print('WINNNNNNNNNNNNNNNNNNNNNNNNjkewhf;oishfhdakdhauisdNNNN')
-
-                    cv2.imshow('frame', frame_with_triangles)
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
+                        cv2.imshow('frame', frame_with_triangles)
+                        if cv2.waitKey(1) & 0xFF == ord('q'):
+                            break
 
                 detector.release()
                 cv2.destroyAllWindows()
-
-        
-       
 
 
 class Drone:
@@ -187,6 +193,7 @@ class Drone:
     def setTarget(self, target):
         self.target = target
 
+
 if __name__ == '__main__':
     controller = DroneController()
-    controller.startDrones()
+    controller.lookAtCenter()
