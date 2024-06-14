@@ -41,10 +41,10 @@ class CameraDetector:
         if frame is None:
             return None, None, frame
 
-        frame2 = imutils.resize(frame, width=1080, height=1920)
+   
 
         # Convert the frame to grayscale
-        gray_frame = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+        gray_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
 
         # Apply Gaussian blur to reduce noise
         blurred_frame = cv2.GaussianBlur(gray_frame, (5, 5), 0)
@@ -55,7 +55,7 @@ class CameraDetector:
         # Find contours
         contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        displayframe = frame2.copy()
+        displayframe = self.frame.copy()
         self.drawGrid(displayframe)
 
         red_center = None
@@ -84,7 +84,7 @@ class CameraDetector:
                 if not cv2.isContourConvex(approx):
                     continue
                 center = self.getCenter(approx)
-                color = self.checkColor(frame2, center)
+                color = self.checkColor(self.frame, center)
 
                 # Check if the color is within the specified range for red
                 if not found_red and self.isColorInRange(color, self.red_lower, self.red_upper):
@@ -171,7 +171,11 @@ class CameraDetector:
 
     def get_frame(self):
         with self.lock:
-            return self.frame.copy() if self.frame is not None else None
+            if self.frame is not None:
+                self.frame = imutils.resize(frame, width=1080, height=1920)
+                return self.frame
+                
+            return None
 
 if __name__ == '__main__':
     detector = CameraDetector()
