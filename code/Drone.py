@@ -6,6 +6,7 @@ import math
 import cv2
 import time
 import threading
+from random import randrange
 
 manualMovementDistance = 0.1
 redURI = 'radio://0/80/2M/E7E7E7E7E7'
@@ -111,14 +112,21 @@ class DroneController:
                 detector.release()
                 cv2.destroyAllWindows()
 
+    def generateCor(self):
+        x = randrange(100, 800)
+        y = randrange(100, 600)
+        return [x, y]
+
+
     def lookAtCenter(self):
         detector = CameraDetector()
         print('Automatic control')
         autoControl = True
 
-        with SyncCrazyflie(greenURI) as scf:
+        with SyncCrazyflie(redURI) as scf:
             with MotionCommander(scf, 0.2) as mc:
-                time.sleep(3)
+                time.sleep(1)
+                targetPos = [300, 300]
                 while autoControl:
                     frame = detector.get_frame()
                     if frame is None:
@@ -127,11 +135,13 @@ class DroneController:
                     center, dir2, frame_with_triangles = detector.detectTriangle(frame)
                     updatedFrame = True
 
+                    cv2.rectangle(frame_with_triangles, targetPos, targetPos, (0, 0, 255), 10)
+
                     if center is not None and dir2 is not None:
                         while(updatedFrame):
                             droneDir = dir2
                             dronePos = center
-                            targetPos = [300, 300]
+
 
                             targetRad = math.atan2(targetPos[1] - dronePos[1], targetPos[0] - dronePos[0])
                             targetAngle = math.degrees(targetRad)
@@ -144,24 +154,28 @@ class DroneController:
                             print(change)
                             if abs(change) > 180:
                                 change += 360
-                            if change > 25:
+
+
+                            if (center[0] > targetPos[0] - 100 and center[0] < targetPos[0] + 100) and (
+                                    center[1] > targetPos[1] - 100 and center[1] < targetPos[1] + 100):
+                                # autoControl = False
+                                targetPos = self.generateCor()
+                                print('WINNNNNNNNNNNNNNNNNNNNNNNNjkewhf;oishfhdakdhauisdNNNN')
+                            elif change > 25:
                                 mc.turn_right(change)
-                                time.sleep(0.5)
                             elif change < -25:
                                 mc.turn_left(abs(change))
-                                time.sleep(0.5)
                             else:
-                                distancex = abs(center[0] - targetPos[0])
-                                distancey = abs(center[1] - targetPos[1])
-                                distance = (math.sqrt(distancex**2 + distancey**2) / 3.84) * 100
-                                mc.forward(distance)
+                                mc.forward(0.1)
+                                # distancex = abs(center[0] - targetPos[0])
+                                # distancey = abs(center[1] - targetPos[1])
+                                # distance = (math.sqrt(distancex**2 + distancey**2) / 3.84) * 100
+                                # mc.forward(distance)
 
 
-                            if (center[0] > targetPos[0] - 50 and center[0] < targetPos[0] + 50) and (
-                                    center[1] > targetPos[1] - 50 and center[1] < targetPos[1] + 50):
-                                autoControl = False
-                                print('WINNNNNNNNNNNNNNNNNNNNNNNNjkewhf;oishfhdakdhauisdNNNN')
+
                             mc.stop()
+
                             updatedFrame = False
 
                         cv2.imshow('frame', frame_with_triangles)

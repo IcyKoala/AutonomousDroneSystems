@@ -7,13 +7,14 @@ class CameraDetector:
     def __init__(self) -> None:
         self.cap = cv2.VideoCapture('https://145.24.238.206:8080///video')
         self.frame = None
+        self.resizedFrame = None
         self.lock = threading.Lock()
         self.running = True
 
         # Define color ranges for red and green triangles (BGR format)
-        self.red_lower = np.array([70, 70, 170])
-        self.red_upper = np.array([150, 150, 256])
-        self.green_lower = np.array([40, 180, 40])
+        self.red_lower = np.array([0, 0, 130])
+        self.red_upper = np.array([140, 140, 256])
+        self.green_lower = np.array([40, 130, 40])
         self.green_upper = np.array([150, 255, 150])
 
         # Start the video capture thread
@@ -43,8 +44,9 @@ class CameraDetector:
 
    
 
+
         # Convert the frame to grayscale
-        gray_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+        gray_frame = cv2.cvtColor(self.resizedFrame, cv2.COLOR_BGR2GRAY)
 
         # Apply Gaussian blur to reduce noise
         blurred_frame = cv2.GaussianBlur(gray_frame, (5, 5), 0)
@@ -55,7 +57,7 @@ class CameraDetector:
         # Find contours
         contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        displayframe = self.frame.copy()
+        displayframe = self.resizedFrame.copy()
         self.drawGrid(displayframe)
 
         red_center = None
@@ -84,7 +86,7 @@ class CameraDetector:
                 if not cv2.isContourConvex(approx):
                     continue
                 center = self.getCenter(approx)
-                color = self.checkColor(self.frame, center)
+                color = self.checkColor(self.resizedFrame, center)
 
                 # Check if the color is within the specified range for red
                 if not found_red and self.isColorInRange(color, self.red_lower, self.red_upper):
@@ -173,8 +175,8 @@ class CameraDetector:
     def get_frame(self):
         with self.lock:
             if self.frame is not None:
-                self.frame = imutils.resize(frame, width=1080, height=1920)
-                return self.frame
+                self.resizedFrame = imutils.resize(self.frame, width=1080, height=1920)
+                return self.resizedFrame
                 
             return None
 
