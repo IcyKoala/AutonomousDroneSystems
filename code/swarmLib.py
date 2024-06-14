@@ -14,7 +14,7 @@ uris = [
 def take_off(scf):
     commander= scf.cf.high_level_commander
 
-    commander.takeoff(0.5, 2.0)
+    commander.takeoff(0.2, 2.0)
     time.sleep(3)
 
 def land(scf):
@@ -110,8 +110,7 @@ if __name__ == '__main__':
     factory = CachedCfFactory(rw_cache='./cache')
     with Swarm(uris, factory=factory) as swarm:
         print('Connected to  Crazyflies')
-        swarm.reset_estimators()
 
         swarm.parallel_safe(take_off)
-        swarm.parallel_safe(run_sequence, args_dict=seq_args)
+        
         swarm.parallel_safe(land)

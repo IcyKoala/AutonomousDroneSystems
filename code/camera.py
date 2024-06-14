@@ -5,7 +5,7 @@ import imutils
 
 class CameraDetector:
     def __init__(self) -> None:
-        self.cap = cv2.VideoCapture('https://145.24.238.206:8080///video')
+        self.cap = cv2.VideoCapture('https://145.137.55.121:8080///video')
         self.frame = None
         self.resizedFrame = None
         self.lock = threading.Lock()
@@ -111,7 +111,7 @@ class CameraDetector:
                     endpoint = (center[0] + green_orientation_vector[0], center[1] + green_orientation_vector[1])
                     cv2.line(displayframe, center, endpoint, (0, 255, 0), 2)
                     found_green = True
-        return red_center, red_orientation_vector, displayframe #(green_center, green_orientation_vector)
+        return red_center, red_orientation_vector, displayframe ,green_center, green_orientation_vector
 
 
 
