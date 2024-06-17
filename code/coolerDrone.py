@@ -52,6 +52,7 @@ def goPosition(scf, color, pos, direc, target):
  
         change = targetRad - droneRad
  
+        print(change)
         
 
         if (pos[0] > target[0] - 100 and pos[0] < target[0] + 100) and (
@@ -202,7 +203,7 @@ class DroneController:
                     targetPos = planning.RotateCircleFormation(2,250,(500,300), 30)
                     for target in targetPos:
                         cv2.rectangle(frame_with_triangles, target, target, (0, 0, 255), 10)
-                    if center_r is not None and dir_r is not None and center_g is not None and dir_g is not None:
+                    if center_g is not None and dir_g is not None:
                         args = { redURI : ["red", center_r, dir_r, targetPos[0]], greenURI : ["green", center_g, dir_g, targetPos[1]]}
 
 
