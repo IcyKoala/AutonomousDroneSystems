@@ -111,7 +111,7 @@ class CameraDetector:
                     endpoint = (center[0] + green_orientation_vector[0], center[1] + green_orientation_vector[1])
                     cv2.line(displayframe, center, endpoint, (0, 255, 0), 2)
                     found_green = True
-        return red_center, red_orientation_vector, displayframe ,green_center, green_orientation_vector
+        return red_center, green_center, displayframe #(green_center, green_orientation_vector)
 
 
 

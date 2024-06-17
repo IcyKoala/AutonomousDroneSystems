@@ -59,7 +59,7 @@ class DroneController:
             commander = scf.cf.high_level_commander
             
 
-            x, y, z = arguments[0], arguments[1], arguments[2]
+            x, y, z = arguments[0] / 7.5, arguments[1] / 7.5, arguments[2]
             duration = arguments[3]
 
             print('Setting position {} to cf {}'.format((x, y, z), cf.link_uri))
@@ -87,21 +87,22 @@ class DroneController:
             if frame is None:
                 continue
 
-            center, dir2, frame_with_triangles = detector.detectTriangle(frame)
+            center_red, center_green, frame_with_triangles = detector.detectTriangle(frame)
             updatedFrame = True
 
             
 
-            if center is not None and dir2 is not None:
+            if center_red is not None and center_green is not None:
                 while(updatedFrame):
 
                     targets = planning.RotateCircleFormation(2,250,(500,300), 30)
                     for target in targets:
                         cv2.rectangle(frame_with_triangles, target, target, (0, 0, 255), 10)
+                        target
 
                     seq_args = {
-                        uris[0]: [targets[0], 0.0, duration],
-                        uris[1]: [targets[1], 0.0, duration],
+                        uris[0]: [targets[0] - center_red, 0.0, duration],
+                        uris[1]: [targets[1] - center_green, 0.0, duration],
                     }
                     swarm.parallel_safe(self.goToCoord, args_dict=seq_args)
 
