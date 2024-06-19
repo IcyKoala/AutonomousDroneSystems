@@ -69,7 +69,7 @@ def index():
     json = []
     for index in range(len(drones)):
         path = star.findPath(drones[index].getPosition(), drones[index].getTarget())
-        x, y = gridtomap(path[0], path[1])
+        x, y = gridtomap(drones[index].getTarget()[0], drones[index].getTarget()[1])
         json.append({'droneID': index, "x" : x, "z" : y , "y": 1})
  
     return json
