@@ -12,19 +12,21 @@ import pathPlanning
 import astar
 from random import randrange
 import time
-
+redtarget = (0,0)
+greentarget = (0,0)
+rotation = [0, 0]
 manualMovementDistance = 0.1
-redURI = 'radio://0/80/2M/E7E7E7E7E7'
+redURI = 'radio://0/20/2M/E7E7E7E7E7'
 redDone = threading.Event()
 greenDone = threading.Event()
-greenURI = 'radio://0/20/2M/E7E7E7E7E7'
+greenURI = 'radio://0/80/2M/E7E7E7E7E7'
 cflib.crtp.init_drivers(enable_debug_driver=False)
 
 def take_off(scf):
     commander= scf.cf.high_level_commander
 
     commander.takeoff(0.2, 2.0)
-    time.sleep(3)
+    time.sleep(2)
 
 def land(scf):
     commander= scf.cf.high_level_commander
@@ -35,7 +37,8 @@ def land(scf):
     commander.stop()
 
 def goPosition(scf, color, pos, direc, target):
-    while True:
+        
+    
         commander= scf.cf.high_level_commander
 
         droneDir = direc
@@ -53,7 +56,6 @@ def goPosition(scf, color, pos, direc, target):
         change = targetRad - droneRad
  
         print(change)
-        
 
         if (pos[0] > target[0] - 100 and pos[0] < target[0] + 100) and (
             pos[1] > target[1] - 100 and pos[1] < target[1] + 100):
@@ -61,15 +63,28 @@ def goPosition(scf, color, pos, direc, target):
                 redDone.set()
             else:
                 greenDone.set()
-            break
+            return
             
 
-        elif abs(change) > 25:
-            commander.go_to(0,0,0,change, 2, relative=True)
-            time.sleep(2)
+        elif abs(change) > 25/180 * math.pi:
+            print("Turning")
+            commander.go_to(0,0,0,-change, 3, relative=True)
+            if color == "red":
+                rotation[1] -= change
+            else:
+                rotation[0] -= change
+            time.sleep(3)
+            print("stop turning")
         else:
-            commander.go_to(0.1,0,0,0, 0.5, relative=True)
-            time.sleep(0.5)
+            print("Going to target")
+            x = math.cos(rotation[0]) * 0.2
+            y = math.sin(rotation[0]) * 0.2
+            if color == "red":
+                x = math.cos(rotation[1]) * 0.2
+                y = math.sin(rotation[1]) * 0.2
+            commander.go_to(x,y,0,0, 2, relative=True)
+            time.sleep(2)
+            print("stop going to target")
 
 
 
@@ -78,6 +93,7 @@ class DroneController:
         redDrone = Drone("RED")
         greenDrone = Drone("GREEN")
         self.droneList = [greenDrone, redDrone]
+        self.swarm = Swarm({greenURI, redURI}, factory= CachedCfFactory(rw_cache='./cache'))
         pass
 
     def setUri(self, drone):
@@ -172,11 +188,23 @@ class DroneController:
                 detector.release()
                 cv2.destroyAllWindows()
 
-    def generateCor(self):
-        x = randrange(100, 800)
-        y = randrange(100, 600)
-        return [x, y]
-    
+    def dronesToLoc(self, greenTarget, redTarget):
+        greenDone.clear()
+        redDone.clear()
+        detector = CameraDetector()
+
+        while not greenDone.is_set() and not redDone.is_set():
+            frame = detector.get_frame()
+            if frame is None:
+                continue
+            center_r, dir_r, frame_with_triangles, center_g, dir_g = detector.detectTriangle(frame)
+            if center_g is not None and dir_g is not None and center_r is not None and dir_r is not None:
+                args = { redURI : ["red", center_r, dir_r, redTarget], greenURI : ["green", center_g, dir_g, greenTarget]}
+                self.swarm.parallel_safe(goPosition, args_dict = args)
+                
+
+
+                
     
 
 
@@ -188,36 +216,36 @@ class DroneController:
         autoControl = True
         factory = CachedCfFactory(rw_cache='./cache')
 
-        with Swarm({greenURI}, factory= factory) as swarm:
+        with Swarm({greenURI, redURI}, factory= factory) as swarm:
                 swarm.parallel_safe(take_off)
                 time.sleep(1)
+                targetPos = planning.RotateCircleFormation(2,200,(500,300), 190)
                 
                 while autoControl:
                     frame = detector.get_frame()
                     if frame is None:
                         continue
-
                     center_r, dir_r, frame_with_triangles, center_g, dir_g = detector.detectTriangle(frame)
-                    redDone.clear()
-                    greenDone.clear()
-                    targetPos = planning.RotateCircleFormation(2,250,(500,300), 30)
+                    if greenDone.is_set() and redDone.is_set():
+                        targetPos = planning.RotateCircleFormation(5,200,(500,300), 80)
+                        redDone.clear()
+                        greenDone.clear()
                     for target in targetPos:
                         cv2.rectangle(frame_with_triangles, target, target, (0, 0, 255), 10)
-                    if center_g is not None and dir_g is not None:
-                        args = { redURI : ["red", center_r, dir_r, targetPos[0]], greenURI : ["green", center_g, dir_g, targetPos[1]]}
+                    cv2.imshow('frame', frame_with_triangles)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        swarm.parallel_safe(land)
+                    if center_g is not None and dir_g is not None and center_r is not None and dir_r is not None:
+                            
+                            args = { redURI : ["red", center_r, dir_r, targetPos[0]], greenURI : ["green", center_g, dir_g, targetPos[1]]}
 
-
-                        
-                        swarm.parallel_safe(goPosition, args_dict = args)
 
                             
-                        while(not greenDone.is_set()):
-                            time.sleep(1)
+                            swarm.parallel_safe(goPosition, args_dict = args)
 
-                        cv2.imshow('frame', frame_with_triangles)
-                        if cv2.waitKey(1) & 0xFF == ord('q'):
-                            swarm.parallel_safe(land)
-                            break
+                            
+                    frame = None
+                            
                         
 
                 detector.release()

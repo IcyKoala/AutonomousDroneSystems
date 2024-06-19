@@ -1,12 +1,12 @@
 import time
-
+import math
 import cflib.crtp
 from cflib.crazyflie.swarm import CachedCfFactory
 from cflib.crazyflie.swarm import Swarm
 from cflib.crazyflie import syncCrazyflie
 
 uris = [
-    'radio://0/20/2M/E7E7E7E7E7',
+   
     'radio://0/80/2M/E7E7E7E7E7',
     # Add more URIs if you want more copters in the swarm
 ]
@@ -78,30 +78,22 @@ redSequence = [
     (.0, y1, h, 3.0),
 ]
 
-seq_args = {
-    uris[0]: [greenSequence],
-    uris[1]: [redSequence],
-}
 
-def setArgs(args):
-    seq_args = {
-        uris[0]: [args[0]],
-        uris[1]: [args[1]],
-    }
 
-def run_sequence(scf: syncCrazyflie.SyncCrazyflie, sequence):
+
+
+def go_forward(scf):
     cf = scf.cf
 
-    for arguments in sequence:
-        commander = scf.cf.high_level_commander
-        
-
-        x, y, z = arguments[0], arguments[1], arguments[2]
-        duration = arguments[3]
-
-        print('Setting position {} to cf {}'.format((x, y, z), cf.link_uri))
-        commander.go_to(x, y, z, 0, duration, relative=True)
-        time.sleep(duration)
+    
+    commander= cf.high_level_commander
+    angle = 3.14/2
+    
+    commander.go_to(0,0 , 0, angle, 3, relative=True)
+    time.sleep(3)
+   
+    commander.go_to(0,0 , 0, angle, 3, relative=True)
+    time.sleep(3)
 
 
 
@@ -112,5 +104,6 @@ if __name__ == '__main__':
         print('Connected to  Crazyflies')
 
         swarm.parallel_safe(take_off)
+        swarm.parallel_safe(go_forward)
         
         swarm.parallel_safe(land)

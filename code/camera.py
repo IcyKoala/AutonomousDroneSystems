@@ -5,16 +5,16 @@ import imutils
 
 class CameraDetector:
     def __init__(self) -> None:
-        self.cap = cv2.VideoCapture('https://145.137.55.121:8080///video')
+        self.cap = cv2.VideoCapture('https://145.24.238.206:8080///video')
         self.frame = None
         self.resizedFrame = None
         self.lock = threading.Lock()
         self.running = True
 
         # Define color ranges for red and green triangles (BGR format)
-        self.red_lower = np.array([0, 0, 130])
+        self.red_lower = np.array([30, 30, 130])
         self.red_upper = np.array([140, 140, 256])
-        self.green_lower = np.array([40, 130, 40])
+        self.green_lower = np.array([70, 150, 0])
         self.green_upper = np.array([150, 255, 150])
 
         # Start the video capture thread
@@ -111,7 +111,7 @@ class CameraDetector:
                     endpoint = (center[0] + green_orientation_vector[0], center[1] + green_orientation_vector[1])
                     cv2.line(displayframe, center, endpoint, (0, 255, 0), 2)
                     found_green = True
-        return red_center, green_center, displayframe #(green_center, green_orientation_vector)
+        return red_center, red_orientation_vector, displayframe ,green_center, green_orientation_vector
 
 
 
@@ -188,7 +188,7 @@ if __name__ == '__main__':
         if frame is None:
             continue
 
-        center,orientation_vector, frame_with_triangles = detector.detectTriangle(frame)
+        center,orientation_vector, frame_with_triangles, a,b = detector.detectTriangle(frame)
 
         if frame_with_triangles is not None:
             cv2.imshow('frame', frame_with_triangles)

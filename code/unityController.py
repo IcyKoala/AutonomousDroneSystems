@@ -1,10 +1,15 @@
 import threading
 from astar import Astar
-from Drone import Drone
+from coolerDrone import Drone
 from pathPlanning import PathPlanning
 from flask import Flask, request
 from json import JSONDecoder
 
+
+
+flag = threading.Event()
+
+flag.clear()
 
 
 gridSize = [8,8]
@@ -24,9 +29,13 @@ def gridtomap(x,y):
 
 @app.route('/', methods = ['POST']) 
 def index():
+    if flag.is_set():
+        return "busy"
+    flag.set()
+
     
     
-    drones = [Drone(i) for i in range(10)]
+    drones = [Drone(i) for i in range(5)]
     pathplanning = PathPlanning()
     star = Astar()
     data = request.get_json()
@@ -36,6 +45,7 @@ def index():
     
     pathplanning = PathPlanning()
     targets = pathplanning.RotateCircleFormation(len(drones), 15, (20,20), 90)
+    targets_real_drones = 
     drones = star.calc_targets(drones, targets)
     json = []
     for index in range(len(drones)):
