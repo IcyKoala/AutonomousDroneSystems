@@ -94,6 +94,8 @@ class DroneController:
         greenDrone = Drone("GREEN")
         self.droneList = [greenDrone, redDrone]
         self.swarm = Swarm({greenURI, redURI}, factory= CachedCfFactory(rw_cache='./cache'))
+        self.detector = CameraDetector()
+        self.swarm.parallel_safe(take_off)
         pass
 
     def setUri(self, drone):
@@ -191,13 +193,14 @@ class DroneController:
     def dronesToLoc(self, greenTarget, redTarget):
         greenDone.clear()
         redDone.clear()
-        detector = CameraDetector()
+        
 
         while not greenDone.is_set() and not redDone.is_set():
-            frame = detector.get_frame()
+            frame = self.detector.get_frame()
             if frame is None:
                 continue
-            center_r, dir_r, frame_with_triangles, center_g, dir_g = detector.detectTriangle(frame)
+            center_r, dir_r, frame_with_triangles, center_g, dir_g = self.detector.detectTriangle(frame)
+            cv2.imshow('frame', frame_with_triangles)
             if center_g is not None and dir_g is not None and center_r is not None and dir_r is not None:
                 args = { redURI : ["red", center_r, dir_r, redTarget], greenURI : ["green", center_g, dir_g, greenTarget]}
                 self.swarm.parallel_safe(goPosition, args_dict = args)

@@ -15,7 +15,7 @@ class Astar:
 
     def calc_targets(self, drones, targets):
         
-        self.grid = [[0 for j in range(40)] for i in range(40)]
+        self.grid = [[0 for j in range(100)] for i in range(100)]
         weights = []
         location = []
 

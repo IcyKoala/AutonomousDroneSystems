@@ -4,6 +4,7 @@ from coolerDrone import Drone
 from pathPlanning import PathPlanning
 from flask import Flask, request
 from json import JSONDecoder
+import coolerDrone
 
 
 
@@ -11,21 +12,35 @@ flag = threading.Event()
 
 flag.clear()
 
+controller = coolerDrone.DroneController()
 
 gridSize = [8,8]
 pathPlanning = PathPlanning()
 
-host_name = "145.137.1.94"
+host_name = "localhost"
 port = 8080
 app = Flask(__name__)
 
 def maptogrid(x,y):
     #return (x,y)
-    return (int(x/8*40), int(y/8*40))
+    return (int(x/8*100), int(y/8*100))
 
 def gridtomap(x,y):
     #return (x,y)
-    return ((x/40*8), (y/40*8))
+    return ((x/100*8), (y/100*8))
+
+#create 2 functions that map a 1080x1080 grid to a 100x100 grid
+#and vice versa
+def cameraToGrid(x,y):
+    return (int(x/1080*100), int(y/1080*100))
+
+def gridToCamera(x,y):
+    return (int(x/100*1080), int(y/100*1080))
+
+def dronesToLocAndDone(green, red):
+    controller.dronesToLoc(green, red)
+    flag.clear()
+            
 
 @app.route('/', methods = ['POST']) 
 def index():
@@ -44,15 +59,19 @@ def index():
         drones[drone['droneID']].setPosition(maptogrid(drone['x'], drone['z']))
     
     pathplanning = PathPlanning()
-    targets = pathplanning.RotateCircleFormation(len(drones), 15, (20,20), 90)
-    targets_real_drones = 
+    targets = pathplanning.RotateCircleFormation(len(drones), 30, (50,50), 90)
     drones = star.calc_targets(drones, targets)
+
+    greentarget = gridToCamera(drones[0].getTarget()[0], drones[0].getTarget()[1])
+    redtarget = gridToCamera(drones[1].getTarget()[0], drones[1].getTarget()[1])
+    threading.Thread(target=dronesToLocAndDone, args=(greentarget, redtarget)).start()
+
     json = []
     for index in range(len(drones)):
         path = star.findPath(drones[index].getPosition(), drones[index].getTarget())
         x, y = gridtomap(path[0], path[1])
         json.append({'droneID': index, "x" : x, "z" : y , "y": 1})
-
+ 
     return json
 
 
