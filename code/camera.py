@@ -2,6 +2,11 @@ import cv2
 import numpy as np
 import threading
 import imutils
+import pathPlanning
+
+def gridToCamera(x,y):
+    return (int(x/100*1000), int(y/100*600))
+
 
 class CameraDetector:
     def __init__(self) -> None:
@@ -188,13 +193,21 @@ class CameraDetector:
 
 if __name__ == '__main__':
     detector = CameraDetector()
+    pathplanning = pathPlanning.PathPlanning()
 
     while True:
         frame = detector.get_frame()
         if frame is None:
             continue
 
+      
         center,orientation_vector, frame_with_triangles, a,b = detector.detectTriangle(frame)
+
+        targets = pathplanning.RotateCircleFormation(5, 30, (50,50), 180)
+        for target in targets:
+            pos = gridToCamera(target[0], target[1])
+            cv2.rectangle(frame_with_triangles, pos, pos, (0, 0, 255), 10)
+
 
         if frame_with_triangles is not None:
             cv2.imshow('frame', frame_with_triangles)

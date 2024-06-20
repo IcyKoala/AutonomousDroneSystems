@@ -20,7 +20,7 @@ redURI = 'radio://0/20/2M/E7E7E7E7E7'
 redDone = threading.Event()
 greenDone = threading.Event()
 greenURI = 'radio://0/80/2M/E7E7E7E7E7'
-cflib.crtp.init_drivers(enable_debug_driver=False)
+
 
 def take_off(scf):
     commander= scf.cf.high_level_commander
@@ -93,9 +93,13 @@ class DroneController:
         redDrone = Drone("RED")
         greenDrone = Drone("GREEN")
         self.droneList = [greenDrone, redDrone]
-        self.swarm = Swarm({greenURI, redURI}, factory= CachedCfFactory(rw_cache='./cache'))
+        cflib.crtp.init_drivers(enable_debug_driver=False)
+        factory = CachedCfFactory(rw_cache='./cache')
+
+        with Swarm({greenURI}, factory= factory) as swarm:
+                swarm.parallel_safe(take_off)
         self.detector = CameraDetector()
-        self.swarm.parallel_safe(take_off)
+        
         pass
 
     def setUri(self, drone):
@@ -191,21 +195,30 @@ class DroneController:
                 cv2.destroyAllWindows()
 
     def dronesToLoc(self, greenTarget, redTarget):
-        greenDone.clear()
-        redDone.clear()
-        
+        factory = CachedCfFactory(rw_cache='./cache')
 
-        while not greenDone.is_set() and not redDone.is_set():
-            frame = self.detector.get_frame()
-            if frame is None:
-                continue
-            center_r, dir_r, frame_with_triangles, center_g, dir_g = self.detector.detectTriangle(frame)
-            cv2.imshow('frame', frame_with_triangles)
-            if center_g is not None and dir_g is not None:
-                if center_r is not None and dir_r is not None:
-                    args = { redURI : ["red", center_r, dir_r, redTarget], greenURI : ["green", center_g, dir_g, greenTarget]}
-                    self.swarm.parallel_safe(goPosition, args_dict = args)
-                    
+        with Swarm({greenURI}, factory= factory) as swarm:
+                
+            greenDone.clear()
+            redDone.clear()
+            
+
+            while not greenDone.is_set():
+                frame = self.detector.get_frame()
+                if frame is None:
+                    print("No frame")
+                    continue
+                center_r, dir_r, frame_with_triangles, center_g, dir_g = self.detector.detectTriangle(frame)
+
+                
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    swarm.parallel_safe(land)
+                if center_g is not None and dir_g is not None:
+                #if center_r is not None and dir_r is not None:
+                        args = { redURI : ["red", center_r, dir_r, redTarget], greenURI : ["green", center_g, dir_g, greenTarget]}
+                        swarm.parallel_safe(goPosition, args_dict = args)
+                frame = None
+                        
 
 
                 

@@ -35,7 +35,7 @@ def cameraToGrid(x,y):
     return (int(x/1080*100), int(y/1080*100))
 
 def gridToCamera(x,y):
-    return (int(x/100*1080), int(y/100*1080))
+    return (int(x/100*1000), int(y/100*600))
 
 def dronesToLocAndDone(green, red):
     controller.dronesToLoc(green, red)
@@ -44,7 +44,9 @@ def dronesToLocAndDone(green, red):
 
 @app.route('/', methods = ['POST']) 
 def index():
+  
     if flag.is_set():
+
         return "busy"
     flag.set()
 
@@ -59,18 +61,19 @@ def index():
         drones[drone['droneID']].setPosition(maptogrid(drone['x'], drone['z']))
     
     pathplanning = PathPlanning()
-    targets = pathplanning.RotateCircleFormation(len(drones), 30, (50,50), 90)
+    targets = pathplanning.RotateCircleFormation(len(drones), 30, (50,50), 180)
     drones = star.calc_targets(drones, targets)
 
     greentarget = gridToCamera(drones[0].getTarget()[0], drones[0].getTarget()[1])
     redtarget = gridToCamera(drones[1].getTarget()[0], drones[1].getTarget()[1])
     threading.Thread(target=dronesToLocAndDone, args=(greentarget, redtarget)).start()
+    print("test")
 
     json = []
     for index in range(len(drones)):
         path = star.findPath(drones[index].getPosition(), drones[index].getTarget())
         x, y = gridtomap(drones[index].getTarget()[0], drones[index].getTarget()[1])
-        json.append({'droneID': index, "x" : x, "z" : y , "y": 1})
+        json.append({'droneID': index, "x" : x, "z" : y , "y": 0.2})
  
     return json
 
