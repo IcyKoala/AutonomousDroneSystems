@@ -17,7 +17,7 @@ controller = coolerDrone.DroneController()
 gridSize = [8,8]
 pathPlanning = PathPlanning()
 
-host_name = "localhost"
+host_name = "145.24.238.156"
 port = 8080
 app = Flask(__name__)
 

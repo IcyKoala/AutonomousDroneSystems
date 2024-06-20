@@ -201,10 +201,11 @@ class DroneController:
                 continue
             center_r, dir_r, frame_with_triangles, center_g, dir_g = self.detector.detectTriangle(frame)
             cv2.imshow('frame', frame_with_triangles)
-            if center_g is not None and dir_g is not None and center_r is not None and dir_r is not None:
-                args = { redURI : ["red", center_r, dir_r, redTarget], greenURI : ["green", center_g, dir_g, greenTarget]}
-                self.swarm.parallel_safe(goPosition, args_dict = args)
-                
+            if center_g is not None and dir_g is not None:
+                if center_r is not None and dir_r is not None:
+                    args = { redURI : ["red", center_r, dir_r, redTarget], greenURI : ["green", center_g, dir_g, greenTarget]}
+                    self.swarm.parallel_safe(goPosition, args_dict = args)
+                    
 
 
                 
